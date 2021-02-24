@@ -14,12 +14,15 @@ namespace Connect4
                 false => $"{FirstName} {MiddleName} {LastName}"
             };
         }
-        public record PlayerColor;
-        public record Yellow : PlayerColor { public override string ToString() => nameof(Yellow); }
-        public record Red : PlayerColor { public override string ToString() => nameof(Red); }
+        public sealed class PlayerColor : StringEnumBase
+        {
+            public static implicit operator PlayerColor(string value) => new() { Value = value };
+            public const string Yellow = nameof(Yellow);
+            public const string Red = nameof(Red);
+        }
         public record Player(Name Name, PlayerColor PlayerColor);
-        public record Challenger(Name Name) : Player(Name, new Yellow());
-        public record Opponent(Name Name) : Player(Name, new Red());
+        public record Challenger(Name Name) : Player(Name, PlayerColor.Yellow);
+        public record Opponent(Name Name) : Player(Name, PlayerColor.Red);
         public record Column
         {
             public int ColumnNumber { get; }
@@ -36,7 +39,7 @@ namespace Connect4
 
         public const int WIDTH = 7;
         public const int HEIGHT = 6;
-        private static readonly Random _rng = new ();
+        private static readonly Random _rng = new();
 
         public static (Choice<Game, WonGame, DrawGame>, string message, string boardStateString) Move(this Game game, Column column)
         {
@@ -149,16 +152,16 @@ namespace Connect4
                 return true;
             }
 
-            int GetColorIndex(PlayerColor color) => color switch { Yellow => 1, Red => 2, _ => throw new Exception($"Color must be {nameof(Yellow)} or {nameof(Red)}") };
+            int GetColorIndex(PlayerColor color) => color.Value switch { PlayerColor.Yellow => 1, PlayerColor.Red => 2, _ => throw new Exception($"Color must be {PlayerColor.Yellow} or {PlayerColor.Red}") };
 
             string GetFormattedBoardStateString(Choice<Game, WonGame, DrawGame> game)
             {
                 var boardState = game.Item switch
                 {
-                    Game g      => g.Board.BoardState,
-                    WonGame wg  => wg.WinningBoard.BoardState,
+                    Game g => g.Board.BoardState,
+                    WonGame wg => wg.WinningBoard.BoardState,
                     DrawGame dg => dg.DrawBoard.BoardState,
-                    _           => throw new Exception()
+                    _ => throw new Exception()
                 };
 
                 StringBuilder sb = new();
@@ -185,7 +188,7 @@ namespace Connect4
 
             Choice<WonGame, DrawGame> PlayUntilDone(Game game)
             {
-                while(true)
+                while (true)
                 {
                     var columnToPlay = GetNextRandomMove(game.Board);
 
@@ -197,7 +200,7 @@ namespace Connect4
                     if (updatedGame.Item is WonGame wg) return wg;
                     if (updatedGame.Item is DrawGame dg) return dg;
                     if (updatedGame.Item is Game g) game = g;
-                } 
+                }
             }
 
             Column GetNextRandomMove(Board board)
@@ -205,12 +208,12 @@ namespace Connect4
                 Column? column = null;
                 while (column == null || board.BoardState[column.ColumnNumber - 1, HEIGHT - 1] != 0)
                     column = TryGetColumn(_rng.Next(1, WIDTH + 1));
-                return column;            
-                
+                return column;
+
                 Column? TryGetColumn(int columnNumber) => columnNumber switch
                 {
                     >= 1 and <= WIDTH => new Column(new ValidColumnNumber(columnNumber)),
-                    _                 => null
+                    _ => null
                 };
             }
         }
