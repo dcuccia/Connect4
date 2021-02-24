@@ -32,6 +32,7 @@ namespace Connect4
         public record Board(int[,] BoardState);
         public record WinningBoard(int[,] BoardState) : Board(BoardState);
         public record DrawBoard(int[,] BoardState) : Board(BoardState);
+        public record InvalidMove;
         public record Game(Board Board, Challenger Challenger, Opponent Opponent, Player NextMove);
         public record NewGame(Challenger Challenger, Opponent Opponent) : Game(new Board(new int[WIDTH, HEIGHT]), Challenger, Opponent, Challenger);
         public record WonGame(Player Winner, Player Loser, WinningBoard WinningBoard);
@@ -46,40 +47,40 @@ namespace Connect4
             var player = game.NextMove;
 
             var newBoard = TryDropDisk(player, game.Board, column);
-            if (newBoard.Item == null)
+            if (newBoard.Item is InvalidMove)
                 return (game, $"Invalid move. Please try again {player.Name}.", GetFormattedBoardStateString(game));
 
             Choice<Game, WonGame, DrawGame> newGame = newBoard.Item switch
             {
                 WinningBoard wb => new WonGame(player, GetNextPlayer(game), wb),
-                DrawBoard db => new DrawGame(game.Challenger, game.Opponent, db),
-                Board b => game with { Board = b, NextMove = GetNextPlayer(game) },
-                _ => throw new Exception("Invalid input for board choice.")
+                DrawBoard db    => new DrawGame(game.Challenger, game.Opponent, db),
+                Board b         => game with { Board = b, NextMove = GetNextPlayer(game) },
+                _               => throw new Exception("Invalid input for board choice.")
             };
 
             return newGame.Item switch
             {
-                WonGame wg => (wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
+                WonGame wg  => (wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
                 DrawGame dg => (dg, $"Draw! Better luck next time to {dg.Challenger.Name} and {dg.Opponent.Name}.", GetFormattedBoardStateString(dg)),
-                Game g => (g, $"{g.NextMove.PlayerColor} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
-                _ => throw new Exception("Invalid input for board choice.")
+                Game g      => (g, $"{g.NextMove.PlayerColor} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
+                _           => throw new Exception("Invalid input for board choice.")
             };
 
-            Choice<Board?, WinningBoard, DrawBoard> TryDropDisk(Player player, Board board, Column column)
+            Choice<Board, WinningBoard, DrawBoard, InvalidMove> TryDropDisk(Player player, Board board, Column column)
             {
                 if (!CanDropDisk(board, column))
-                    return default(Board?);
+                    return new InvalidMove();
 
                 var newBoardState = UpdateBoardState(board.BoardState, column, player.PlayerColor);
 
                 return IsWinningBoardState(newBoardState) switch
                 {
-                    true => new WinningBoard(newBoardState),
+                    true  => new WinningBoard(newBoardState),
                     false => IsDrawBoardState(newBoardState) switch
-                    {
-                        true => new DrawBoard(newBoardState),
-                        false => board with { BoardState = newBoardState }
-                    }
+                             {
+                                 true  => new DrawBoard(newBoardState),
+                                 false => board with { BoardState = newBoardState }
+                             }
                 };
 
                 bool CanDropDisk(Board board, Column column) => board.BoardState[column.ColumnNumber - 1, board.BoardState.GetLength(1) - 1] == 0; // "top" slot is empty
@@ -158,10 +159,10 @@ namespace Connect4
             {
                 var boardState = game.Item switch
                 {
-                    Game g => g.Board.BoardState,
-                    WonGame wg => wg.WinningBoard.BoardState,
+                    WonGame wg  => wg.WinningBoard.BoardState,
                     DrawGame dg => dg.DrawBoard.BoardState,
-                    _ => throw new Exception()
+                    Game g      => g.Board.BoardState,
+                    _           => throw new Exception()
                 };
 
                 StringBuilder sb = new();
@@ -213,7 +214,7 @@ namespace Connect4
                 Column? TryGetColumn(int columnNumber) => columnNumber switch
                 {
                     >= 1 and <= WIDTH => new Column(new ValidColumnNumber(columnNumber)),
-                    _ => null
+                    _                 => null
                 };
             }
         }
