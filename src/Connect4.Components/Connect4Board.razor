@@ -1,0 +1,57 @@
+﻿<p>Challenger</p>
+
+<NameEntry @bind-Name="ChallengerName" NameIsValidChanged="isValid => { showStartGame = isValid; }"/>
+
+<p>Opponent</p>
+
+<NameEntry @bind-Name="OpponentName"/>
+
+@if (showStartGame)
+{
+    <button @onclick="StartGame">Start Game!</button>
+}
+
+@if (!string.IsNullOrWhiteSpace(BoardStateString))
+{
+    <p>@game.Board.BoardState</p>
+}
+
+@if (game != null)
+{
+    <div>
+        Move to column:
+        <input @bind="Column" /><button @onclick="() => Move(Column)">Move!</button>
+    </div>
+
+}
+
+@code
+{
+    private bool showStartGame = false;
+    private Game game;
+    private string BoardStateString { get; set; } = "";
+    private int Column { get; set; } = 1;
+    public Name ChallengerName { get; set; }
+    public Name OpponentName { get; set; }
+
+    void StartGame()
+    {
+        var challenger = new Challenger(
+            new Name(ChallengerName.FirstName,
+                     ChallengerName.MiddleName,
+                     ChallengerName.LastName));
+
+        var opponent = new Opponent(
+            new Name(OpponentName.FirstName,
+                     OpponentName.MiddleName,
+                     OpponentName.LastName));
+
+        Game game = new NewGame(challenger, opponent);
+    }
+
+    void Move(int column)
+    {
+        GameTurn gt = game.Move(new Column(new ValidColumnNumber(column)));
+        BoardStateString = gt.PrintableBoardState;
+    }
+}

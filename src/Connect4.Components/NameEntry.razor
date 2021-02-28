@@ -1,0 +1,25 @@
+﻿<div>
+    First: <input required value=@Name.FirstName @oninput="InputChanged"/>
+    Middle: <input value=@Name.MiddleName @oninput="InputChanged"/>
+    Last: <input required value=@Name.LastName @oninput="InputChanged"/>
+</div>
+
+
+@code
+{
+    [Parameter]
+    public EventCallback<bool> NameIsValidChanged { get; set; }
+    [Parameter]
+    public EventCallback<Name> NameChanged { get; set; }
+
+    [Parameter]
+    public Name Name { get; set; }
+
+    protected async Task InputChanged(ChangeEventArgs args)
+    {
+        bool nameIsValid = !string.IsNullOrWhiteSpace(Name.FirstName) &&
+                           !string.IsNullOrWhiteSpace(Name.LastName);
+        await NameIsValidChanged.InvokeAsync(nameIsValid);
+        await NameChanged.InvokeAsync(Name);
+    }
+}

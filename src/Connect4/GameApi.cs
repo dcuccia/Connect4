@@ -4,51 +4,50 @@ using System.Text;
 
 namespace Connect4
 {
-    public static class GameApi
+    public static class Globals { public const int WIDTH = 7; public const int HEIGHT = 6; }
+
+    public record Name(string FirstName, string? MiddleName, string LastName)
     {
-        public record Name(string FirstName, string? MiddleName, string LastName)
+        public override string ToString() => string.IsNullOrWhiteSpace(MiddleName) switch
         {
-            public override string ToString() => string.IsNullOrWhiteSpace(MiddleName) switch
-            {
-                true => $"{FirstName} {LastName}",
-                false => $"{FirstName} {MiddleName} {LastName}"
-            };
-        }
-        public sealed class PlayerColor : StringEnumBase
-        {
-            public static implicit operator PlayerColor(string value) => new() { Value = value };
-            public const string Yellow = nameof(Yellow);
-            public const string Red = nameof(Red);
-        }
-        public record Player(Name Name, PlayerColor PlayerColor);
-        public record Challenger(Name Name) : Player(Name, PlayerColor.Yellow);
-        public record Opponent(Name Name) : Player(Name, PlayerColor.Red);
-        public record Column
-        {
-            public int ColumnNumber { get; }
-            public Column(ValidColumnNumber columnNumber) { ColumnNumber = columnNumber.ColumnNumber; }
-        }
-        public record ValidColumnNumber(int ColumnNumber);
-        public record Board(int[,] BoardState);
-        public record WinningBoard(int[,] BoardState) : Board(BoardState);
-        public record DrawBoard(int[,] BoardState) : Board(BoardState);
-        public record InvalidMove;
-        public record Game(Board Board, Challenger Challenger, Opponent Opponent, Player NextMove);
-        public record NewGame(Challenger Challenger, Opponent Opponent) : Game(new Board(new int[WIDTH, HEIGHT]), Challenger, Opponent, Challenger);
-        public record WonGame(Player Winner, Player Loser, WinningBoard WinningBoard);
-        public record DrawGame(Player Challenger, Player Opponent, DrawBoard DrawBoard);
+            true  => $"{FirstName} {LastName}",
+            false => $"{FirstName} {MiddleName} {LastName}"
+        };
+    }
+    public sealed class PlayerColor : StringEnumBase
+    {
+        public static implicit operator PlayerColor(string value) => new() { Value = value };
+        public const string Yellow = nameof(Yellow);
+        public const string Red = nameof(Red);
+    }
+    public record Player(Name Name, PlayerColor PlayerColor);
+    public record Challenger(Name Name) : Player(Name, PlayerColor.Yellow);
+    public record Opponent(Name Name) : Player(Name, PlayerColor.Red);
+    public record Column
+    {
+        public int ColumnNumber { get; }
+        public Column(ValidColumnNumber columnNumber) { ColumnNumber = columnNumber.ColumnNumber; }
+    }
+    public record ValidColumnNumber(int ColumnNumber);
+    public record Board(int[,] BoardState);
+    public record WinningBoard(int[,] BoardState) : Board(BoardState);
+    public record DrawBoard(int[,] BoardState) : Board(BoardState);
+    public record InvalidMove;
+    public record Game(Board Board, Challenger Challenger, Opponent Opponent, Player NextMove);
+    public record NewGame(Challenger Challenger, Opponent Opponent) : Game(new Board(new int[Globals.WIDTH, Globals.HEIGHT]), Challenger, Opponent, Challenger);
+    public record WonGame(Player Winner, Player Loser, WinningBoard WinningBoard);
+    public record DrawGame(Player Challenger, Player Opponent, DrawBoard DrawBoard);
+    public record GameTurn(Choice<Game, WonGame, DrawGame> Game, string TurnMessage, string PrintableBoardState); // example enhancement
 
-        public const int WIDTH = 7;
-        public const int HEIGHT = 6;
-        private static readonly Random _rng = new();
-
-        public static (Choice<Game, WonGame, DrawGame>, string message, string boardStateString) Move(this Game game, Column column)
+    public static class GameMethods
+    {
+        public static GameTurn Move(this Game game, Column column)
         {
             var player = game.NextMove;
 
             var newBoard = TryDropDisk(player, game.Board, column);
             if (newBoard.Item is InvalidMove)
-                return (game, $"Invalid move. Please try again {player.Name}.", GetFormattedBoardStateString(game));
+                return new GameTurn(game, $"Invalid move. Please try again {player.Name}.", GetFormattedBoardStateString(game));
 
             Choice<Game, WonGame, DrawGame> newGame = newBoard.Item switch
             {
@@ -60,9 +59,9 @@ namespace Connect4
 
             return newGame.Item switch
             {
-                WonGame wg  => (wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
-                DrawGame dg => (dg, $"Draw! Better luck next time to {dg.Challenger.Name} and {dg.Opponent.Name}.", GetFormattedBoardStateString(dg)),
-                Game g      => (g, $"{g.NextMove.PlayerColor} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
+                WonGame wg  => new GameTurn(wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
+                DrawGame dg => new GameTurn(dg, $"Draw! Better luck next time to {dg.Challenger.Name} and {dg.Opponent.Name}.", GetFormattedBoardStateString(dg)),
+                Game g      => new GameTurn(g, $"{g.NextMove.PlayerColor} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
                 _           => throw new Exception("Invalid input for board choice.")
             };
 
@@ -175,47 +174,6 @@ namespace Connect4
                     sb.Append("\n");
                 }
                 return sb.ToString();
-            }
-        }
-
-        public static void Demo()
-        {
-            var challenger = new Challenger(new Name("David", "John", "Cuccia"));
-            var opponent = new Opponent(new Name("Sara", "Joyce", "Robinson"));
-
-            Game game = new NewGame(challenger, opponent);
-
-            var finishedGame = PlayUntilDone(game);
-
-            Choice<WonGame, DrawGame> PlayUntilDone(Game game)
-            {
-                while (true)
-                {
-                    var columnToPlay = GetNextRandomMove(game.Board);
-
-                    (var updatedGame, var message, var boardString) = game.Move(columnToPlay);
-
-                    Console.WriteLine(message);
-                    Console.WriteLine(boardString);
-
-                    if (updatedGame.Item is WonGame wg) return wg;
-                    if (updatedGame.Item is DrawGame dg) return dg;
-                    if (updatedGame.Item is Game g) game = g;
-                }
-            }
-
-            Column GetNextRandomMove(Board board)
-            {
-                Column? column = null;
-                while (column == null || board.BoardState[column.ColumnNumber - 1, HEIGHT - 1] != 0)
-                    column = TryGetColumn(_rng.Next(1, WIDTH + 1));
-                return column;
-
-                Column? TryGetColumn(int columnNumber) => columnNumber switch
-                {
-                    >= 1 and <= WIDTH => new Column(new ValidColumnNumber(columnNumber)),
-                    _                 => null
-                };
             }
         }
     }
