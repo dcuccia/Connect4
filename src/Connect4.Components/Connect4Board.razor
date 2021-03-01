@@ -1,41 +1,72 @@
 ﻿<p>Challenger</p>
-
-<NameEntry @bind-Name="ChallengerName" NameIsValidChanged="isValid => { showStartGame = isValid; }"/>
+<div>
+    First: <input @bind="ChallengerName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+    Middle: <input @bind="ChallengerName.MiddleName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+    Last: <input @bind="ChallengerName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+</div>
 
 <p>Opponent</p>
+<div>
+    First: <input @bind="OpponentName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+    Middle: <input @bind="OpponentName.MiddleName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+    Last: <input @bind="OpponentName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+</div>
 
-<NameEntry @bind-Name="OpponentName"/>
+<br/>
 
-@if (showStartGame)
+@if (showStartGame && !gameStarted)
 {
     <button @onclick="StartGame">Start Game!</button>
 }
 
-@if (!string.IsNullOrWhiteSpace(BoardStateString))
+@if(gameStarted)
 {
-    <p>@game.Board.BoardState</p>
+    <button @onclick="Reset">Reset Game</button>
 }
 
-@if (game != null)
+@if (gameStarted && !gameComplete)
 {
     <div>
-        Move to column:
+        Move to column: 
         <input @bind="Column" /><button @onclick="() => Move(Column)">Move!</button>
     </div>
+}
 
+<br/>
+
+@if (!string.IsNullOrWhiteSpace(TurnMessage))
+{
+    <text>@TurnMessage</text>
+}
+
+<br/>
+
+@if (!string.IsNullOrWhiteSpace(BoardStateString))
+{
+    <textarea rows="7" cols="30">@BoardStateString</textarea>
 }
 
 @code
 {
+    private class MutableName
+    {
+        public string FirstName { get; set; } = "";
+        public string MiddleName { get; set; } = "";
+        public string LastName { get; set; } = "";
+    }
     private bool showStartGame = false;
+    private bool gameStarted = false;
+    private bool gameComplete = false;
     private Game game;
     private string BoardStateString { get; set; } = "";
+    private string TurnMessage { get; set; } = "";
     private int Column { get; set; } = 1;
-    public Name ChallengerName { get; set; }
-    public Name OpponentName { get; set; }
+    private MutableName ChallengerName { get; set; } = new();
+    private MutableName OpponentName { get; set; } = new();
 
     void StartGame()
     {
+        showStartGame = false;
         var challenger = new Challenger(
             new Name(ChallengerName.FirstName,
                      ChallengerName.MiddleName,
@@ -46,12 +77,40 @@
                      OpponentName.MiddleName,
                      OpponentName.LastName));
 
-        Game game = new NewGame(challenger, opponent);
+        game = new NewGame(challenger, opponent);
+        gameStarted = true;
     }
 
     void Move(int column)
     {
-        GameTurn gt = game.Move(new Column(new ValidColumnNumber(column)));
-        BoardStateString = gt.PrintableBoardState;
+        Choice<Game, WonGame, DrawGame> updatedGame;
+
+        (updatedGame, TurnMessage, BoardStateString) =  game.Move(new Column(new ValidColumnNumber(column)));
+
+        if (updatedGame.Item is WonGame wg || updatedGame.Item is DrawGame dg)
+        {
+            gameComplete = true;
+            return; // can't move
+        }
+        
+        game = updatedGame.Item;
+    }
+
+    void Reset()
+    {
+        ChallengerName = new();
+        OpponentName = new();
+        gameStarted = false;
+        gameComplete = false;
+        TurnMessage = "";
+        BoardStateString = "";
+    }
+
+    public void CheckIfNamesAreValid(KeyboardEventArgs args)
+    {
+        showStartGame = !string.IsNullOrWhiteSpace(ChallengerName.FirstName) &&
+                        !string.IsNullOrWhiteSpace(ChallengerName.LastName) &&
+                        !string.IsNullOrWhiteSpace(OpponentName.FirstName) &&
+                        !string.IsNullOrWhiteSpace(OpponentName.LastName);
     }
 }
