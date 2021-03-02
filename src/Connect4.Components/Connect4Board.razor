@@ -1,20 +1,32 @@
-﻿<p>Challenger</p>
+﻿@*<p>Challenger</p>
 <div>
     First: <input @bind="ChallengerName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-    Middle: <input @bind="ChallengerName.MiddleName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
     Last: <input @bind="ChallengerName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-</div>
-
-<p>Opponent</p>
-<div>
-    First: <input @bind="OpponentName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-    Middle: <input @bind="OpponentName.MiddleName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-    Last: <input @bind="OpponentName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
 </div>
 
 <br/>
 
-@if (showStartGame && !gameStarted)
+<p>Opponent</p>
+<div>
+    First: <input @bind="OpponentName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+    Last: <input @bind="OpponentName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
+</div>*@
+
+<p>Challenger</p>
+<NameEntry @bind-FirstName="ChallengerName.FirstName"
+           @bind-LastName="ChallengerName.LastName"
+           @bind-NameIsValid="challengerNameIsValid"/>
+
+<br/>
+
+<p>Opponent</p>
+<NameEntry @bind-FirstName="OpponentName.FirstName"
+           @bind-LastName="OpponentName.LastName"
+           @bind-NameIsValid="opponentNameIsValid"/>
+
+<br/>
+
+@if (NamesAreValid && !gameStarted)
 {
     <button @onclick="StartGame">Start Game!</button>
 }
@@ -24,11 +36,22 @@
     <button @onclick="Reset">Reset Game</button>
 }
 
+<br/>
+<br/>
+
 @if (gameStarted && !gameComplete)
 {
+    <text>@game.NextMove.Name.FirstName</text><text>&#39;s (</text>@game.NextMove.PlayerColor<text>&#39;s) turn!</text>
+    <br/>
+    <text>Move to column: </text>
     <div>
-        Move to column: 
-        <input @bind="Column" /><button @onclick="() => Move(Column)">Move!</button>
+        <button @onclick="()=>Move(1)">1</button>
+        <button @onclick="()=>Move(2)">2</button>
+        <button @onclick="()=>Move(3)">3</button>
+        <button @onclick="()=>Move(4)">4</button>
+        <button @onclick="()=>Move(5)">5</button>
+        <button @onclick="()=>Move(6)">6</button>
+        <button @onclick="()=>Move(7)">7</button>
     </div>
 }
 
@@ -48,33 +71,30 @@
 
 @code
 {
-    private class MutableName
+    private record MutableName
     {
         public string FirstName { get; set; } = "";
-        public string MiddleName { get; set; } = "";
         public string LastName { get; set; } = "";
     }
-    private bool showStartGame = false;
+    private bool challengerNameIsValid;
+    private bool opponentNameIsValid;
+    private bool NamesAreValid => challengerNameIsValid && opponentNameIsValid;
     private bool gameStarted = false;
     private bool gameComplete = false;
     private Game game;
     private string BoardStateString { get; set; } = "";
     private string TurnMessage { get; set; } = "";
-    private int Column { get; set; } = 1;
     private MutableName ChallengerName { get; set; } = new();
     private MutableName OpponentName { get; set; } = new();
 
     void StartGame()
     {
-        showStartGame = false;
         var challenger = new Challenger(
             new Name(ChallengerName.FirstName,
-                     ChallengerName.MiddleName,
                      ChallengerName.LastName));
 
         var opponent = new Opponent(
             new Name(OpponentName.FirstName,
-                     OpponentName.MiddleName,
                      OpponentName.LastName));
 
         game = new NewGame(challenger, opponent);
@@ -99,18 +119,20 @@
     void Reset()
     {
         ChallengerName = new();
+        challengerNameIsValid = false;
         OpponentName = new();
+        opponentNameIsValid = false;
         gameStarted = false;
         gameComplete = false;
         TurnMessage = "";
         BoardStateString = "";
     }
 
-    public void CheckIfNamesAreValid(KeyboardEventArgs args)
-    {
-        showStartGame = !string.IsNullOrWhiteSpace(ChallengerName.FirstName) &&
-                        !string.IsNullOrWhiteSpace(ChallengerName.LastName) &&
-                        !string.IsNullOrWhiteSpace(OpponentName.FirstName) &&
-                        !string.IsNullOrWhiteSpace(OpponentName.LastName);
-    }
+    //public void CheckIfNamesAreValid(KeyboardEventArgs args)
+    //{
+    //    namesAreValid = !string.IsNullOrWhiteSpace(ChallengerName.FirstName) &&
+    //                    !string.IsNullOrWhiteSpace(ChallengerName.LastName) &&
+    //                    !string.IsNullOrWhiteSpace(OpponentName.FirstName) &&
+    //                    !string.IsNullOrWhiteSpace(OpponentName.LastName);
+    //}
 }

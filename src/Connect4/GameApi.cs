@@ -6,14 +6,7 @@ namespace Connect4
 {
     public static class Globals { public const int WIDTH = 7; public const int HEIGHT = 6; }
 
-    public record Name(string FirstName, string? MiddleName, string LastName)
-    {
-        public override string ToString() => string.IsNullOrWhiteSpace(MiddleName) switch
-        {
-            true  => $"{FirstName} {LastName}",
-            false => $"{FirstName} {MiddleName} {LastName}"
-        };
-    }
+    public record Name(string FirstName, string LastName) { public override string ToString() => $"{FirstName} {LastName}"; }
     public sealed class PlayerColor : StringEnumBase
     {
         public static implicit operator PlayerColor(string value) => new() { Value = value };

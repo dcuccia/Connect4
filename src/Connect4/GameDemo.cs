@@ -8,8 +8,8 @@ namespace Connect4
 
         public void Run()
         {
-            var challenger = new Challenger(new Name("David", "John", "Cuccia"));
-            var opponent = new Opponent(new Name("Sara", "Joyce", "Robinson"));
+            var challenger = new Challenger(new Name("David", "Cuccia"));
+            var opponent = new Opponent(new Name("Sara", "Robinson"));
 
             Game game = new NewGame(challenger, opponent);
 

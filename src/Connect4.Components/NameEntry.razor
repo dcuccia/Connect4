@@ -1,27 +1,37 @@
 ﻿<div>
-    First: <input required value=@FirstName @oninput="OnParametersSetAsync"/>
-    Middle: <input value=@MiddleName @oninput="OnParametersSetAsync"/>
-    Last: <input required value=@LastName @oninput="OnParametersSetAsync"/>
+    First: <input required value=@FirstName @oninput="async (args) => 
+        { 
+            FirstName = args.Value.ToString();
+            await FirstNameChanged.InvokeAsync(FirstName);
+            await NameIsValidChanged.InvokeAsync(IsNameValid());
+        }"/>
+    Last: <input required value=@LastName  @oninput="async (args) => 
+        { 
+            LastName = args.Value.ToString();
+            await LastNameChanged.InvokeAsync(LastName);
+            await NameIsValidChanged.InvokeAsync(IsNameValid());
+        }"/>
 </div>
 
 @code
 {
     [Parameter]
-    public EventCallback<bool> NameChanged { get; set; }
+    public EventCallback<string> FirstNameChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> LastNameChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> NameIsValidChanged { get; set; }
 
     [Parameter]
     public string FirstName { get; set; }
 
     [Parameter]
-    public string MiddleName { get; set; }
-
-    [Parameter]
     public string LastName { get; set; }
 
-    protected override async Task OnParametersSetAsync()
-    {
-        bool nameIsValid = !string.IsNullOrWhiteSpace(FirstName) &&
-                           !string.IsNullOrWhiteSpace(LastName);
-        await NameChanged.InvokeAsync(nameIsValid);
-    }
+    [Parameter]
+    public bool NameIsValid { get; set; }
+
+    private bool IsNameValid() => !string.IsNullOrWhiteSpace(FirstName) && !string.IsNullOrWhiteSpace(LastName);
 }
