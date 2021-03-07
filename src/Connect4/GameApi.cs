@@ -10,12 +10,12 @@ namespace Connect4
     public sealed class PlayerColor : StringEnumBase
     {
         public static implicit operator PlayerColor(string value) => new() { Value = value };
-        public const string Yellow = nameof(Yellow);
-        public const string Red = nameof(Red);
+        public const string Orange = nameof(Orange);
+        public const string Blue = nameof(Blue);
     }
     public record Player(Name Name, PlayerColor PlayerColor);
-    public record Challenger(Name Name) : Player(Name, PlayerColor.Yellow);
-    public record Opponent(Name Name) : Player(Name, PlayerColor.Red);
+    public record Challenger(Name Name) : Player(Name, PlayerColor.Orange);
+    public record Opponent(Name Name) : Player(Name, PlayerColor.Blue);
     public record Column
     {
         public int ColumnNumber { get; }
@@ -145,7 +145,7 @@ namespace Connect4
                 return true;
             }
 
-            int GetColorIndex(PlayerColor color) => color.Value switch { PlayerColor.Yellow => 1, PlayerColor.Red => 2, _ => throw new Exception($"Color must be {PlayerColor.Yellow} or {PlayerColor.Red}") };
+            int GetColorIndex(PlayerColor color) => color.Value switch { PlayerColor.Orange => 1, PlayerColor.Blue => 2, _ => throw new Exception($"Color must be {PlayerColor.Orange} or {PlayerColor.Blue}") };
 
             string GetFormattedBoardStateString(Choice<Game, WonGame, DrawGame> game)
             {

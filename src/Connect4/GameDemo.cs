@@ -13,23 +13,17 @@ namespace Connect4
 
             Game game = new NewGame(challenger, opponent);
 
-            var finishedGame = PlayUntilDone(game);
-
-            Choice<WonGame, DrawGame> PlayUntilDone(Game game)
+            while (true)
             {
-                while (true)
-                {
-                    var columnToPlay = GetNextRandomMove(game.Board);
+                var columnToPlay = GetNextRandomMove(game.Board);
 
-                    (var updatedGame, var message, var boardString) = game.Move(columnToPlay); // example record decomp benefit!
+                (var updatedGame, var message, var boardString) = game.Move(columnToPlay); // example record decomp benefit!
 
-                    Console.WriteLine(message);
-                    Console.WriteLine(boardString);
+                Console.WriteLine(message);
+                Console.WriteLine(boardString);
 
-                    if (updatedGame.Item is WonGame wg) return wg;
-                    if (updatedGame.Item is DrawGame dg) return dg;
-                    if (updatedGame.Item is Game g) game = g;
-                }
+                if (updatedGame.Item is WonGame || updatedGame.Item is DrawGame) break;
+                if (updatedGame.Item is Game g) game = g;
             }
 
             Column GetNextRandomMove(Board board)
