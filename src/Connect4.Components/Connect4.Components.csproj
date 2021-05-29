@@ -9,8 +9,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.11" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="3.1.11" />
+    <PackageReference Include="OneOf" Version="3.0.186" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Connect4\Connect4.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="OneOf" />
   </ItemGroup>
 </Project>

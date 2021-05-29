@@ -103,17 +103,16 @@
 
     void Move(int column)
     {
-        Choice<Game, WonGame, DrawGame> updatedGame;
+        OneOf<Game, WonGame, DrawGame> updatedGame;
 
         (updatedGame, TurnMessage, BoardStateString) =  game.Move(new Column(new ValidColumnNumber(column)));
 
-        if (updatedGame.Item is WonGame wg || updatedGame.Item is DrawGame dg)
+        Action continuation = updatedGame.Value switch
         {
-            gameComplete = true;
-            return; // can't move
-        }
-        
-        game = updatedGame.Item;
+            WonGame or DrawGame => () => { gameComplete = true; return; }, // can't move
+            Game g              => () => { game = g; }
+        };
+        continuation();
     }
 
     void Reset()

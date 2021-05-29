@@ -22,8 +22,8 @@ namespace Connect4
                 Console.WriteLine(message);
                 Console.WriteLine(boardString);
 
-                if (updatedGame.Item is WonGame || updatedGame.Item is DrawGame) break;
-                if (updatedGame.Item is Game g) game = g;
+                if (updatedGame.Value is WonGame || updatedGame.Value is DrawGame) break;
+                if (updatedGame.Value is Game g) game = g;
             }
 
             Column GetNextRandomMove(Board board)

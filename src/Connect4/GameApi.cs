@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
-
+using OneOf;
 namespace Connect4
 {
     public static class Globals { public const int WIDTH = 7; public const int HEIGHT = 6; }
 
     public record Name(string FirstName, string LastName) { public override string ToString() => $"{FirstName} {LastName}"; }
-    public sealed class PlayerColor : StringEnumBase
-    {
-        public static implicit operator PlayerColor(string value) => new() { Value = value };
-        public const string Orange = nameof(Orange);
-        public const string Blue = nameof(Blue);
-    }
+    public record Orange { public override string ToString() => nameof(Orange); }
+    public record Blue { public override string ToString() => nameof(Blue); }
+    [GenerateOneOf]
+    public partial class PlayerColor : OneOfBase<Orange, Blue> { }
     public record Player(Name Name, PlayerColor PlayerColor);
-    public record Challenger(Name Name) : Player(Name, PlayerColor.Orange);
-    public record Opponent(Name Name) : Player(Name, PlayerColor.Blue);
+    public record Challenger(Name Name) : Player(Name, new Orange());
+    public record Opponent(Name Name) : Player(Name, new Blue());
     public record Column
     {
         public int ColumnNumber { get; }
@@ -30,7 +28,7 @@ namespace Connect4
     public record NewGame(Challenger Challenger, Opponent Opponent) : Game(new Board(new int[Globals.WIDTH, Globals.HEIGHT]), Challenger, Opponent, Challenger);
     public record WonGame(Player Winner, Player Loser, WinningBoard WinningBoard);
     public record DrawGame(Player Challenger, Player Opponent, DrawBoard DrawBoard);
-    public record GameTurn(Choice<Game, WonGame, DrawGame> Game, string TurnMessage, string PrintableBoardState); // example enhancement
+    public record GameTurn(OneOf<Game, WonGame, DrawGame> Game, string TurnMessage, string PrintableBoardState); // example enhancement
 
     public static class GameMethods
     {
@@ -39,10 +37,10 @@ namespace Connect4
             var player = game.NextMove;
 
             var newBoard = TryDropDisk(player, game.Board, column);
-            if (newBoard.Item is InvalidMove)
+            if (newBoard.Value is InvalidMove)
                 return new GameTurn(game, $"Invalid move. Please try again {player.Name}.", GetFormattedBoardStateString(game));
 
-            Choice<Game, WonGame, DrawGame> newGame = newBoard.Item switch
+            OneOf<Game, WonGame, DrawGame> newGame = newBoard.Value switch
             {
                 WinningBoard wb => new WonGame(player, GetNextPlayer(game), wb),
                 DrawBoard db    => new DrawGame(game.Challenger, game.Opponent, db),
@@ -50,15 +48,15 @@ namespace Connect4
                 _               => throw new Exception("Invalid input for board choice.")
             };
 
-            return newGame.Item switch
+            return newGame.Value switch
             {
-                WonGame wg  => new GameTurn(wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
+                WonGame wg  => new GameTurn(wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor.Value} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
                 DrawGame dg => new GameTurn(dg, $"Draw! Better luck next time to {dg.Challenger.Name} and {dg.Opponent.Name}.", GetFormattedBoardStateString(dg)),
-                Game g      => new GameTurn(g, $"{g.NextMove.PlayerColor} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
+                Game g      => new GameTurn(g, $"{g.NextMove.PlayerColor.Value} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
                 _           => throw new Exception("Invalid input for board choice.")
             };
 
-            Choice<Board, WinningBoard, DrawBoard, InvalidMove> TryDropDisk(Player player, Board board, Column column)
+            OneOf<Board, WinningBoard, DrawBoard, InvalidMove> TryDropDisk(Player player, Board board, Column column)
             {
                 if (!CanDropDisk(board, column))
                     return new InvalidMove();
@@ -145,11 +143,11 @@ namespace Connect4
                 return true;
             }
 
-            int GetColorIndex(PlayerColor color) => color.Value switch { PlayerColor.Orange => 1, PlayerColor.Blue => 2, _ => throw new Exception($"Color must be {PlayerColor.Orange} or {PlayerColor.Blue}") };
+            int GetColorIndex(PlayerColor color) => color.Value switch { Orange => 1, Blue => 2, _ => throw new Exception($"Color must be {nameof(Orange)} or {nameof(Blue)}") };
 
-            string GetFormattedBoardStateString(Choice<Game, WonGame, DrawGame> game)
+            string GetFormattedBoardStateString(OneOf<Game, WonGame, DrawGame> game)
             {
-                var boardState = game.Item switch
+                var boardState = game.Value switch
                 {
                     WonGame wg  => wg.WinningBoard.BoardState,
                     DrawGame dg => dg.DrawBoard.BoardState,
