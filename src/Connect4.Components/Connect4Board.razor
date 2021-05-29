@@ -1,27 +1,11 @@
-﻿@*<p>Challenger</p>
-<div>
-    First: <input @bind="ChallengerName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-    Last: <input @bind="ChallengerName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-</div>
-
-<br/>
-
-<p>Opponent</p>
-<div>
-    First: <input @bind="OpponentName.FirstName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-    Last: <input @bind="OpponentName.LastName" required @bind:event="oninput" @onkeyup="CheckIfNamesAreValid"/>
-</div>*@
-
-<p>Challenger</p>
-<NameEntry @bind-FirstName="ChallengerName.FirstName"
-           @bind-LastName="ChallengerName.LastName"
+﻿<p>Challenger</p>
+<NameEntry @bind-Name="ChallengerName"
            @bind-NameIsValid="challengerNameIsValid"/>
 
 <br/>
 
 <p>Opponent</p>
-<NameEntry @bind-FirstName="OpponentName.FirstName"
-           @bind-LastName="OpponentName.LastName"
+<NameEntry @bind-Name="OpponentName"
            @bind-NameIsValid="opponentNameIsValid"/>
 
 <br/>
@@ -41,7 +25,7 @@
 
 @if (gameStarted && !gameComplete)
 {
-    <text>@game.NextMove.Name.FirstName</text><text>&#39;s (</text>@game.NextMove.PlayerColor<text>&#39;s) turn!</text>
+    <text>@game.NextMove.Name.FirstName</text><text>&#39;s (</text>@game.NextMove.PlayerColor.Value<text>&#39;s) turn!</text>
     <br/>
     <text>Move to column: </text>
     <div>
@@ -71,11 +55,6 @@
 
 @code
 {
-    private record MutableName
-    {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-    }
     private bool challengerNameIsValid;
     private bool opponentNameIsValid;
     private bool NamesAreValid => challengerNameIsValid && opponentNameIsValid;
@@ -90,12 +69,10 @@
     void StartGame()
     {
         var challenger = new Challenger(
-            new Name(ChallengerName.FirstName,
-                     ChallengerName.LastName));
+            new Name(ChallengerName.FirstName, ChallengerName.LastName));
 
         var opponent = new Opponent(
-            new Name(OpponentName.FirstName,
-                     OpponentName.LastName));
+            new Name(OpponentName.FirstName, OpponentName.LastName));
 
         game = new NewGame(challenger, opponent);
         gameStarted = true;
@@ -126,12 +103,4 @@
         TurnMessage = "";
         BoardStateString = "";
     }
-
-    //public void CheckIfNamesAreValid(KeyboardEventArgs args)
-    //{
-    //    namesAreValid = !string.IsNullOrWhiteSpace(ChallengerName.FirstName) &&
-    //                    !string.IsNullOrWhiteSpace(ChallengerName.LastName) &&
-    //                    !string.IsNullOrWhiteSpace(OpponentName.FirstName) &&
-    //                    !string.IsNullOrWhiteSpace(OpponentName.LastName);
-    //}
 }

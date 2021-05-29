@@ -1,37 +1,29 @@
 ﻿<div>
-    First: <input required value=@FirstName @oninput="async (args) => 
+    First: <input required value=@Name.FirstName @oninput="async (args) => 
         { 
-            FirstName = args.Value.ToString();
-            await FirstNameChanged.InvokeAsync(FirstName);
-            await NameIsValidChanged.InvokeAsync(IsNameValid());
+            Name.FirstName = args.Value.ToString();
+            await NameChanged.InvokeAsync(Name);
+            await NameIsValidChanged.InvokeAsync(Name.IsValid());
         }"/>
-    Last: <input required value=@LastName  @oninput="async (args) => 
+    Last: <input required value=@Name.LastName  @oninput="async (args) => 
         { 
-            LastName = args.Value.ToString();
-            await LastNameChanged.InvokeAsync(LastName);
-            await NameIsValidChanged.InvokeAsync(IsNameValid());
+            Name.LastName = args.Value.ToString();
+            await NameChanged.InvokeAsync(Name);
+            await NameIsValidChanged.InvokeAsync(Name.IsValid());
         }"/>
 </div>
 
 @code
 {
     [Parameter]
-    public EventCallback<string> FirstNameChanged { get; set; }
-
-    [Parameter]
-    public EventCallback<string> LastNameChanged { get; set; }
+    public EventCallback<MutableName> NameChanged { get; set; }
 
     [Parameter]
     public EventCallback<bool> NameIsValidChanged { get; set; }
 
     [Parameter]
-    public string FirstName { get; set; }
-
-    [Parameter]
-    public string LastName { get; set; }
+    public MutableName Name { get; set; }
 
     [Parameter]
     public bool NameIsValid { get; set; }
-
-    private bool IsNameValid() => !string.IsNullOrWhiteSpace(FirstName) && !string.IsNullOrWhiteSpace(LastName);
 }
