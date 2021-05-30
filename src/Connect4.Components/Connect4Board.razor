@@ -1,52 +1,61 @@
-﻿<p>Challenger</p>
-<NameEntry @bind-Name="ChallengerName"
-           @bind-NameIsValid="challengerNameIsValid"/>
+﻿
 
-<br/>
+@if (!gameStarted)
+{
+    <p>Challenger</p>
+    <NameEntry @bind-Name="ChallengerName" @bind-NameIsValid="challengerNameIsValid" />
 
-<p>Opponent</p>
-<NameEntry @bind-Name="OpponentName"
-           @bind-NameIsValid="opponentNameIsValid"/>
+    <br />
 
-<br/>
+    <p>Opponent</p>
+    <NameEntry @bind-Name="OpponentName" @bind-NameIsValid="opponentNameIsValid" />
+}
+else if (NamesAreValid)
+{
+    <p>Challenger: @ChallengerName</p>
+
+    <p>Opponent: @OpponentName</p>
+}
+
+<br />
 
 @if (NamesAreValid && !gameStarted)
 {
     <button @onclick="StartGame">Start Game!</button>
 }
 
-@if(gameStarted)
+@if (gameStarted)
 {
     <button @onclick="Reset">Reset Game</button>
 }
 
-<br/>
-<br/>
+<br />
+<br />
 
 @if (gameStarted && !gameComplete)
 {
     <text>@game.NextMove.Name.FirstName</text><text>&#39;s (</text>@game.NextMove.PlayerColor.Value<text>&#39;s) turn!</text>
-    <br/>
+    <br />
     <text>Move to column: </text>
     <div>
-        <button @onclick="()=>Move(1)">1</button>
-        <button @onclick="()=>Move(2)">2</button>
-        <button @onclick="()=>Move(3)">3</button>
-        <button @onclick="()=>Move(4)">4</button>
-        <button @onclick="()=>Move(5)">5</button>
-        <button @onclick="()=>Move(6)">6</button>
-        <button @onclick="()=>Move(7)">7</button>
+        <button class="px-2" @onclick="()=>Move(1)">1</button>
+        <button class="px-2" @onclick="()=>Move(2)">2</button>
+        <button class="px-2" @onclick="()=>Move(3)">3</button>
+        <button class="px-2" @onclick="()=>Move(4)">4</button>
+        <button class="px-2" @onclick="()=>Move(5)">5</button>
+        <button class="px-2" @onclick="()=>Move(6)">6</button>
+        <button class="px-2" @onclick="()=>Move(7)">7</button>
     </div>
 }
 
-<br/>
+<br />
 
 @if (!string.IsNullOrWhiteSpace(TurnMessage))
 {
     <text>@TurnMessage</text>
 }
 
-<br/>
+<br />
 
 @if (!string.IsNullOrWhiteSpace(BoardStateString))
 {
@@ -76,18 +85,20 @@
 
         game = new NewGame(challenger, opponent);
         gameStarted = true;
+        BoardStateString = game.GetFormattedBoardStateString();
     }
 
     void Move(int column)
     {
         OneOf<Game, WonGame, DrawGame> updatedGame;
 
-        (updatedGame, TurnMessage, BoardStateString) =  game.Move(new Column(new ValidColumnNumber(column)));
-
+        (updatedGame, TurnMessage) = game.Move(new Column(new ValidColumnNumber(column)));
+        BoardStateString = game.GetFormattedBoardStateString();
         Action continuation = updatedGame.Value switch
         {
-            WonGame or DrawGame => () => { gameComplete = true; return; }, // can't move
-            Game g              => () => { game = g; }
+            WonGame or DrawGame => () => { gameComplete = true; }
+            , // can't move
+            Game g => () => { game = g; }
         };
         continuation();
     }

@@ -28,7 +28,7 @@ namespace Connect4
     public record NewGame(Challenger Challenger, Opponent Opponent) : Game(new Board(new int[Globals.WIDTH, Globals.HEIGHT]), Challenger, Opponent, Challenger);
     public record WonGame(Player Winner, Player Loser, WinningBoard WinningBoard);
     public record DrawGame(Player Challenger, Player Opponent, DrawBoard DrawBoard);
-    public record GameTurn(OneOf<Game, WonGame, DrawGame> Game, string TurnMessage, string PrintableBoardState); // example enhancement
+    public record GameTurn(OneOf<Game, WonGame, DrawGame> Game, string TurnMessage); // example enhancement
 
     public static class GameMethods
     {
@@ -38,7 +38,7 @@ namespace Connect4
 
             var newBoard = TryDropDisk(player, game.Board, column);
             if (newBoard.Value is InvalidMove)
-                return new GameTurn(game, $"Invalid move. Please try again {player.Name}.", GetFormattedBoardStateString(game));
+                return new GameTurn(game, $"Invalid move. Please try again {player.Name}.");
 
             OneOf<Game, WonGame, DrawGame> newGame = newBoard.Value switch
             {
@@ -50,9 +50,9 @@ namespace Connect4
 
             return newGame.Value switch
             {
-                WonGame wg  => new GameTurn(wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor.Value} player, {wg.Winner.Name}!", GetFormattedBoardStateString(wg)),
-                DrawGame dg => new GameTurn(dg, $"Draw! Better luck next time to {dg.Challenger.Name} and {dg.Opponent.Name}.", GetFormattedBoardStateString(dg)),
-                Game g      => new GameTurn(g, $"{g.NextMove.PlayerColor.Value} moves to Column {column.ColumnNumber}", GetFormattedBoardStateString(g)),
+                WonGame wg  => new GameTurn(wg, $"Winner! Congratulations to the {wg.Winner.PlayerColor.Value} player, {wg.Winner.Name}!"),
+                DrawGame dg => new GameTurn(dg, $"Draw! Better luck next time to {dg.Challenger.Name} and {dg.Opponent.Name}."),
+                Game g      => new GameTurn(g, $"{g.NextMove.PlayerColor.Value} moves to Column {column.ColumnNumber}"),
                 _           => throw new Exception("Invalid input for board choice.")
             };
 
@@ -145,27 +145,32 @@ namespace Connect4
 
             int GetColorIndex(PlayerColor color) => color.Value switch { Orange => 1, Blue => 2, _ => throw new Exception($"Color must be {nameof(Orange)} or {nameof(Blue)}") };
 
-            string GetFormattedBoardStateString(OneOf<Game, WonGame, DrawGame> game)
-            {
-                var boardState = game.Value switch
-                {
-                    WonGame wg  => wg.WinningBoard.BoardState,
-                    DrawGame dg => dg.DrawBoard.BoardState,
-                    Game g      => g.Board.BoardState,
-                    _           => throw new Exception()
-                };
+        }
 
-                StringBuilder sb = new();
-                for (int j = boardState.GetLength(1) - 1; j >= 0; j--)
+        public static string GetFormattedBoardStateString(this Game game)     => ((OneOf<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
+        public static string GetFormattedBoardStateString(this WonGame game)  => ((OneOf<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
+        public static string GetFormattedBoardStateString(this DrawGame game) => ((OneOf<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
+        public static string GetFormattedBoardStateString(this OneOf<Game, WonGame, DrawGame> game)
+        {
+            var boardState = game.Value switch
+            {
+                WonGame wg => wg.WinningBoard.BoardState,
+                DrawGame dg => dg.DrawBoard.BoardState,
+                Game g => g.Board.BoardState,
+                _ => throw new Exception()
+            };
+
+            StringBuilder sb = new();
+            for (int j = boardState.GetLength(1) - 1; j >= 0; j--)
+            {
+                for (int i = 0; i < boardState.GetLength(0); i++)
                 {
-                    for (int i = 0; i < boardState.GetLength(0); i++)
-                    {
-                        sb.Append(boardState[i, j] + "\t");
-                    }
-                    sb.Append("\n");
+                    var stateChar = boardState[i, j] > 0 ? boardState[i, j].ToString() : "_";
+                    sb.Append(stateChar + "\t");
                 }
-                return sb.ToString();
+                sb.Append("\n");
             }
+            return sb.ToString();
         }
     }
 }

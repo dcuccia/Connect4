@@ -17,10 +17,10 @@ namespace Connect4
             {
                 var columnToPlay = GetNextRandomMove(game.Board);
 
-                (var updatedGame, var message, var boardString) = game.Move(columnToPlay); // example record decomp benefit!
+                (var updatedGame, var message) = game.Move(columnToPlay); // example record decomp benefit!
 
                 Console.WriteLine(message);
-                Console.WriteLine(boardString);
+                Console.WriteLine(updatedGame.GetFormattedBoardStateString());
 
                 if (updatedGame.Value is WonGame || updatedGame.Value is DrawGame) break;
                 if (updatedGame.Value is Game g) game = g;
