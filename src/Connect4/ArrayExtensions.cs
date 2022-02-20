@@ -1,22 +1,21 @@
 using System.Collections.Generic;
 
-namespace Connect4
+namespace Connect4;
+
+public static class ArrayExtensions
 {
-    public static class ArrayExtensions
+    public static IEnumerable<T> SliceRow<T>(this T[,] array, int row)
     {
-        public static IEnumerable<T> SliceRow<T>(this T[,] array, int row)
+        for (var i = 0; i < array.GetLength(0); i++)
         {
-            for (var i = 0; i < array.GetLength(0); i++)
-            {
-                yield return array[i, row];
-            }
+            yield return array[i, row];
         }
-        public static IEnumerable<T> SliceColumn<T>(this T[,] array, int column)
+    }
+    public static IEnumerable<T> SliceColumn<T>(this T[,] array, int column)
+    {
+        for (var i = 0; i < array.GetLength(1); i++)
         {
-            for (var i = 0; i < array.GetLength(1); i++)
-            {
-                yield return array[column, i];
-            }
+            yield return array[column, i];
         }
     }
 }

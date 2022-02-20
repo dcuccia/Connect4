@@ -7,9 +7,9 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.11" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="3.1.11" />
-    <PackageReference Include="OneOf" Version="3.0.186" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="6.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.2" />
+    <PackageReference Include="OneOf" Version="3.0.211" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Connect4\Connect4.csproj" />

@@ -4,14 +4,15 @@
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1-beta1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0-preview.1.21102.12" />
-    <PackageReference Include="Scrutor" Version="3.3.0" />
-    <PackageReference Include="OneOf" Version="3.0.186" />
-    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.186" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="Scrutor" Version="4.0.0" />
+    <PackageReference Include="OneOf" Version="3.0.211" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.211" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="OneOf" />
