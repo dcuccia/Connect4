@@ -1,18 +1,17 @@
 ﻿
 using System.Text;
-using OneOf;
 namespace Connect4;
 
 public static class Globals { public const int WIDTH = 7; public const int HEIGHT = 6; }
 
 public record Name(string FirstName, string LastName) { public override string ToString() => $"{FirstName} {LastName}"; }
-public record Orange { public override string ToString() => nameof(Orange); }
-public record Blue { public override string ToString() => nameof(Blue); }
-[GenerateOneOf]
-public partial class PlayerColor : OneOfBase<Orange, Blue> { }
+public record Orange : PlayerColor { public Orange() : base(nameof(Orange)) { } };
+public record Blue : PlayerColor { public Blue() : base(nameof(Blue)) { } };
+public record PlayerColor(string Color);
 public record Player(Name Name, PlayerColor PlayerColor);
 public record Challenger(Name Name) : Player(Name, new Orange());
 public record Opponent(Name Name) : Player(Name, new Blue());
+public record GameStart(Challenger Challenger, Opponent Opponent);
 public record Column
 {
     public int ColumnNumber { get; }
@@ -27,7 +26,49 @@ public record Game(Board Board, Challenger Challenger, Opponent Opponent, Player
 public record NewGame(Challenger Challenger, Opponent Opponent) : Game(new Board(new int[Globals.WIDTH, Globals.HEIGHT]), Challenger, Opponent, Challenger);
 public record WonGame(Player Winner, Player Loser, WinningBoard WinningBoard);
 public record DrawGame(Player Challenger, Player Opponent, DrawBoard DrawBoard);
-public record GameTurn(OneOf<Game, WonGame, DrawGame> Game, string TurnMessage); // example enhancement
+public record GameTurn(Choice<Game, WonGame, DrawGame> Game, string TurnMessage); // example enhancement
+
+public class Choice<A, B>
+{
+    public Choice(A value) { Value = value!; }
+    public Choice(B value) { Value = value!; }
+
+    public dynamic Value { get; }
+
+    // equality and string representation delegated to member (Item)
+    public override bool Equals(object? obj) => Value.Equals(obj);
+    public override int GetHashCode() => Value.GetHashCode();
+    public override string ToString() => Value.ToString();
+}
+
+public class Choice<A, B, C>
+{
+    public Choice(A value) { Value = value!; }
+    public Choice(B value) { Value = value!; }
+    public Choice(C value) { Value = value!; }
+
+    public dynamic Value { get; }
+
+    // equality and string representation delegated to member (Item)
+    public override bool Equals(object? obj) => Value.Equals(obj);
+    public override int GetHashCode() => Value.GetHashCode();
+    public override string ToString() => Value.ToString();
+}
+
+public class Choice<A, B, C, D>
+{
+    public Choice(A value) { Value = value!; }
+    public Choice(B value) { Value = value!; }
+    public Choice(C value) { Value = value!; }
+    public Choice(D value) { Value = value!; }
+
+    public dynamic Value { get; }
+
+    // equality and string representation delegated to member (Item)
+    public override bool Equals(object? obj) => Value.Equals(obj);
+    public override int GetHashCode() => Value.GetHashCode();
+    public override string ToString() => Value.ToString();
+}
 
 public static class GameMethods
 {
@@ -39,7 +80,7 @@ public static class GameMethods
         if (newBoard.Value is InvalidMove)
             return new GameTurn(game, $"Invalid move. Please try again {player.Name}.");
 
-        OneOf<Game, WonGame, DrawGame> newGame = newBoard.Value switch
+        Choice<Game, WonGame, DrawGame> newGame = newBoard.Value switch
         {
             WinningBoard wb => new WonGame(player, GetNextPlayer(game), wb),
             DrawBoard db    => new DrawGame(game.Challenger, game.Opponent, db),
@@ -55,7 +96,7 @@ public static class GameMethods
             _           => throw new Exception("Invalid input for board choice.")
         };
 
-        OneOf<Board, WinningBoard, DrawBoard, InvalidMove> TryDropDisk(Player player, Board board, Column column)
+        Choice<Board, WinningBoard, DrawBoard, InvalidMove> TryDropDisk(Player player, Board board, Column column)
         {
             if (!CanDropDisk(board, column))
                 return new InvalidMove();
@@ -146,17 +187,17 @@ public static class GameMethods
 
     }
 
-    public static string GetFormattedBoardStateString(this Game game)     => ((OneOf<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
-    public static string GetFormattedBoardStateString(this WonGame game)  => ((OneOf<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
-    public static string GetFormattedBoardStateString(this DrawGame game) => ((OneOf<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
-    public static string GetFormattedBoardStateString(this OneOf<Game, WonGame, DrawGame> game)
+    public static string GetFormattedBoardStateString(this Game game)     => ((Choice<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
+    public static string GetFormattedBoardStateString(this WonGame game)  => ((Choice<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
+    public static string GetFormattedBoardStateString(this DrawGame game) => ((Choice<Game, WonGame, DrawGame>)game).GetFormattedBoardStateString();
+    public static string GetFormattedBoardStateString(this Choice<Game, WonGame, DrawGame> game)
     {
         var boardState = game.Value switch
         {
-            WonGame wg => wg.WinningBoard.BoardState,
+            WonGame wg  => wg.WinningBoard.BoardState,
             DrawGame dg => dg.DrawBoard.BoardState,
-            Game g => g.Board.BoardState,
-            _ => throw new Exception()
+            Game g      => g.Board.BoardState,
+            _           => throw new Exception()
         };
 
         StringBuilder sb = new();

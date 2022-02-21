@@ -90,17 +90,14 @@ else if (NamesAreValid)
 
     void Move(int column)
     {
-        OneOf<Game, WonGame, DrawGame> updatedGame;
+        (var updatedGame, TurnMessage) = game.Move(new Column(new ValidColumnNumber(column)));
 
-        (updatedGame, TurnMessage) = game.Move(new Column(new ValidColumnNumber(column)));
-        BoardStateString = game.GetFormattedBoardStateString();
-        Action continuation = updatedGame.Value switch
-        {
-            WonGame or DrawGame => () => { gameComplete = true; }
-            , // can't move
-            Game g => () => { game = g; }
-        };
-        continuation();
+        BoardStateString = updatedGame.GetFormattedBoardStateString();
+
+        if (updatedGame.Value is WonGame or DrawGame)
+            gameComplete = true;
+        else if (updatedGame.Value is Game g)
+            game = g;
     }
 
     void Reset()
